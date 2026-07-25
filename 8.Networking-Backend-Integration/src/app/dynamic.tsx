@@ -9,44 +9,34 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function Index() {
+export default function Dynamic() {
   const [users, setUsers] = useState([]);
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/users");
+      const res = await fetch("/api/users/5");
       const data = await res.json();
       // console.log(data.users);
-      setUsers(data.users);
+      setUsers(data.users || []);
     } catch (error) {
       console.error("Failed to fetch users:", error);
     }
   };
-  const createUsers = async ({ name, password }) => {
+  const updateUser = async ({ name, password }) => {
     try {
-      const res = await fetch("/api/users", {
-        method: "POST",
+      const res = await fetch("/api/users/5", {
+        // Points to dynamic id route /api/users/1
+        method: "PATCH", // Using PATCH for partial updates
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, password }),
       });
-      fetchUsers(); // Refresh users after creation
+      fetchUsers(); // Refresh user details after update
       setName("");
       setPassword("");
     } catch (error) {
-      console.error("Failed to create users:", error);
-    }
-  };
-
-  const deleteUsers = async (id) => {
-    try {
-      const res = await fetch(`/api/users/${id}`, {
-        method: "DELETE",
-      });
-      fetchUsers(); // Refresh users after deletion
-    } catch (error) {
-      console.error("Error deleting user:", error);
+      console.error("Failed to update user:", error);
     }
   };
 
@@ -56,6 +46,7 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Text>Fill the new data here</Text>
       <TextInput
         placeholder="Enter your name"
         style={styles.input}
@@ -70,14 +61,10 @@ export default function Index() {
         onChangeText={setPassword}
       />
       <Button
-        title="Post user"
-        onPress={() => createUsers({ name, password })}
+        title="Update User"
+        onPress={() => updateUser({ name, password })}
       />
       <Button title="Get user" onPress={() => fetchUsers()} />
-      <Button
-        title="Delete first user"
-        onPress={() => users[0]?.id && deleteUsers(users[0].id)}
-      />
       <Text>Users Name</Text>
       <FlatList
         data={users}
