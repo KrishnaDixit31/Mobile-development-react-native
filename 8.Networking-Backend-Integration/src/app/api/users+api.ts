@@ -38,10 +38,3 @@ export const POST = async (request: Request) => {
   }
 };
 
-export const  DELETE=async(_req: Request, { params })=>{
-  await db.execute({
-    sql: 'DELETE FROM users WHERE id = ?',
-    args: [params.id],
-  });
-  return Response.json({ deleted: true });
-}

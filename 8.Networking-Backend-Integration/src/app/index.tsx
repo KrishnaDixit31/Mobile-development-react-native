@@ -19,7 +19,7 @@ export default function Index() {
       const res = await fetch("/api/users");
       const data = await res.json();
       // console.log(data.users);
-      setUsers(data.users);
+      setUsers(data.users || []);
     } catch (error) {
       console.error("Failed to fetch users:", error);
     }
@@ -35,13 +35,13 @@ export default function Index() {
       setName("");
       setPassword("");
     } catch (error) {
-      console.error("Failed to create users:", error);
+      console.error("Failed to create user:", error);
     }
   };
 
-  const deleteUsers = async (id) => {
+  const deleteUser = async (id: string | number) => {
     try {
-      const res = await fetch(`/api/users/${id}`, {
+      await fetch(`/api/users/${id}`, {
         method: "DELETE",
       });
       fetchUsers(); // Refresh users after deletion
@@ -76,13 +76,24 @@ export default function Index() {
       <Button title="Get user" onPress={() => fetchUsers()} />
       <Button
         title="Delete first user"
-        onPress={() => users[0]?.id && deleteUsers(users[0].id)}
+        onPress={() => users[0]?.id && deleteUser(users[0].id)}
       />
-      <Text>Users Name</Text>
+
+      <Text>Users List</Text>
       <FlatList
         data={users}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <Text>Username - {item.name}</Text>}
+        renderItem={({ item }) => (
+          <View style={styles.userRow}>
+            <Text>{item.id}.</Text>
+            <Text>Username - {item.name}</Text>
+            <Button
+              title="Delete"
+              color="#ef4444"
+              onPress={() => deleteUser(item.id)}
+            />
+          </View>
+        )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         style={styles.userContainer}
         contentContainerStyle={styles.listContent}
@@ -113,6 +124,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
+  },
+  userRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   separator: {
     height: 10,

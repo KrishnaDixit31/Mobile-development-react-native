@@ -55,3 +55,19 @@ export const PATCH = async (request, { id }) => {
     return Response.json({ error: "Failed to update user" }, { status: 500 });
   }
 };
+
+export const DELETE = async (_req: Request, { id }: { id?: string }) => {
+  try {
+    const result = await db.execute({
+      sql: 'DELETE FROM user_data WHERE id = ?',
+      args: [id],
+    });
+    if (result.rowsAffected === 0) {
+      return Response.json({ error: "User not found" }, { status: 404 });
+    }
+    return Response.json({ deleted: true });
+  } catch (error) {
+    console.error("DELETE API Error:", error);
+    return Response.json({ error: "Failed to delete user" }, { status: 500 });
+  }
+};

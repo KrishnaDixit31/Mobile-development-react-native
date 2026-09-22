@@ -16,7 +16,7 @@ export default function Dynamic() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/users/5");
+      const res = await fetch("/api/users/2");
       const data = await res.json();
       // console.log(data.users);
       setUsers(data.users || []);
@@ -26,7 +26,7 @@ export default function Dynamic() {
   };
   const updateUser = async ({ name, password }) => {
     try {
-      const res = await fetch("/api/users/5", {
+      const res = await fetch("/api/users/2", {
         // Points to dynamic id route /api/users/1
         method: "PATCH", // Using PATCH for partial updates
         headers: { "Content-Type": "application/json" },
@@ -37,6 +37,16 @@ export default function Dynamic() {
       setPassword("");
     } catch (error) {
       console.error("Failed to update user:", error);
+    }
+  };
+  const deleteUser = async (id: string | number) => {
+    try {
+      await fetch(`/api/users/${id}`, {
+        method: "DELETE",
+      });
+      fetchUsers(); // Refresh users after deletion
+    } catch (error) {
+      console.error("Error deleting user:", error);
     }
   };
 
@@ -65,11 +75,22 @@ export default function Dynamic() {
         onPress={() => updateUser({ name, password })}
       />
       <Button title="Get user" onPress={() => fetchUsers()} />
-      <Text>Users Name</Text>
+
+      <Text>Users List</Text>
       <FlatList
         data={users}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <Text>Username - {item.name}</Text>}
+        renderItem={({ item }) => (
+          <View style={styles.userRow}>
+            <Text>{item.id}.</Text>
+            <Text>Username - {item.name}</Text>
+            <Button
+              title="Delete"
+              color="#ef4444"
+              onPress={() => deleteUser(item.id)}
+            />
+          </View>
+        )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         style={styles.userContainer}
         contentContainerStyle={styles.listContent}
@@ -97,6 +118,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "#7dd3fc",
     marginBottom: 20,
+  },
+  userRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   listContent: {
     padding: 20,
