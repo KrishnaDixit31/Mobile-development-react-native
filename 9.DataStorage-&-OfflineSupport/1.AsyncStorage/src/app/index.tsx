@@ -101,14 +101,14 @@ export default function Index() {
           <Button
             style={[styles.gridBtn, { backgroundColor: "#2563EB" }]}
             color="#fff"
-            onPressIn={SaveData}
+            onPress={SaveData}
           >
             Save Data
           </Button>
           <Button
             style={[styles.gridBtn, { backgroundColor: "#16A34A" }]}
             color="#fff"
-            onPressIn={GetData}
+            onPress={GetData}
           >
             Get Data
           </Button>
@@ -117,14 +117,14 @@ export default function Index() {
           <Button
             style={[styles.gridBtn, { backgroundColor: "#0284C7" }]}
             color="#fff"
-            onPressIn={saveObject}
+            onPress={saveObject}
           >
             Save Object
           </Button>
           <Button
             style={[styles.gridBtn, { backgroundColor: "#0D9488" }]}
             color="#fff"
-            onPressIn={GetObject}
+            onPress={GetObject}
           >
             Get Object
           </Button>
@@ -133,14 +133,14 @@ export default function Index() {
           <Button
             style={[styles.gridBtn, { backgroundColor: "#D97706" }]}
             color="#fff"
-            onPressIn={saveMultiple}
+            onPress={saveMultiple}
           >
             Save Multi
           </Button>
           <Button
             style={[styles.gridBtn, { backgroundColor: "#7C3AED" }]}
             color="#fff"
-            onPressIn={getMultiple}
+            onPress={getMultiple}
           >
             Get Multi
           </Button>
@@ -149,14 +149,14 @@ export default function Index() {
           <Button
             style={[styles.gridBtn, { backgroundColor: "#9333EA" }]}
             color="#fff"
-            onPressIn={mergeValue}
+            onPress={mergeValue}
           >
             Merge Value
           </Button>
           <Button
             style={[styles.gridBtn, { backgroundColor: "#4F46E5" }]}
             color="#fff"
-            onPressIn={GetAllKeys}
+            onPress={GetAllKeys}
           >
             Get All Keys
           </Button>
@@ -165,14 +165,14 @@ export default function Index() {
           <Button
             style={[styles.gridBtn, { backgroundColor: "#E11D48" }]}
             color="#fff"
-            onPressIn={RemoveData}
+            onPress={RemoveData}
           >
             Remove Data
           </Button>
           <Button
             style={[styles.gridBtn, { backgroundColor: "#BE123C" }]}
             color="#fff"
-            onPressIn={removeMultiple}
+            onPress={removeMultiple}
           >
             Remove Multi
           </Button>
@@ -181,7 +181,7 @@ export default function Index() {
           <Button
             style={[styles.fullBtn, { backgroundColor: "#DC2626" }]}
             color="#fff"
-            onPressIn={ClearStorage}
+            onPress={ClearStorage}
           >
             Clear All Storage
           </Button>
