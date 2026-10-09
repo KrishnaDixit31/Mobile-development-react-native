@@ -7,7 +7,10 @@ export default function Index() {
     <View style={styles.container}>
       <StatusBar style="auto" />
       <Text style={styles.title}>Media Device API</Text>
-      <Button title="Camera" onPress={() => router.push("/camera")} />
+      <View style={styles.content}>
+        <Button title="Camera" onPress={() => router.push("/camera")} />
+        <Button title="Audio" onPress={() => router.push("/audio")} />
+      </View>
     </View>
   );
 }
@@ -24,5 +27,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     marginBottom: 20,
+  },
+  content: {
+    gap: 24,
   },
 });
