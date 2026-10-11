@@ -4,7 +4,7 @@ import {
   Button,
   FlatList,
   Linking,
-  Platform,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -17,7 +17,8 @@ const MediaLibraryScreen = () => {
   const [permission, requestPermission] = MediaLibrary.usePermissions();
   const [assets, setAssets] = useState<MediaLibrary.Asset[]>([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [selected, setSelected] = useState<MediaLibrary.AssetInfo | null>(null);
+  const [loadingInfo, setLoadingInfo] = useState(false);
 
   useEffect(() => {
     if (permission?.granted) {
@@ -70,7 +71,7 @@ const MediaLibraryScreen = () => {
     setLoading(true);
     try {
       const page = await MediaLibrary.getAssetsAsync({
-        first: 12,
+        first: 9,
         mediaType: MediaLibrary.MediaType.photo,
         sortBy: [[MediaLibrary.SortBy.creationTime, false]],
       });
@@ -82,19 +83,34 @@ const MediaLibraryScreen = () => {
     }
   };
 
-  // Limited access picker only work on (iOS / Android 14+)
-  const openPicker = async () => {
+  const openAsset = async (asset: MediaLibrary.Asset) => {
+    setLoadingInfo(true);
     try {
-      await MediaLibrary.presentPermissionsPickerAsync();
-      setMessage("User updated selected photos. Reload your gallery grid.");
+      const info = await MediaLibrary.getAssetInfoAsync(asset, {
+        shouldDownloadFromNetwork: true, // download iCloud photos on iOS
+      });
+      setSelected(info);
     } catch (error) {
       Alert.alert(
-        "Unavailable",
-        error instanceof Error
-          ? error.message
-          : "Only supported on iOS and Android 14+.",
+        "Could not read file",
+        error instanceof Error ? error.message : "Unknown error",
       );
+    } finally {
+      setLoadingInfo(false);
     }
+  };
+
+  const useFile = () => {
+    if (!selected?.localUri) {
+      Alert.alert(
+        "No local file",
+        "localUri is not available yet. Try again or check iCloud download.",
+      );
+      return;
+    }
+
+    // Example: upload, share, or read with expo-file-system
+    Alert.alert("File ready", selected.localUri);
   };
 
   return (
@@ -112,22 +128,38 @@ const MediaLibraryScreen = () => {
           data={assets}
           keyExtractor={(item) => item.id}
           numColumns={3}
+          showsVerticalScrollIndicator={false}
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
             <View style={styles.gridItem}>
-              <Image
-                source={{ uri: item.uri }}
-                style={styles.image}
-                contentFit="cover"
-              />
+              <Pressable onPress={() => openAsset(item)}>
+                <Image
+                  source={{ uri: item.uri }}
+                  style={styles.image}
+                  contentFit="cover"
+                />
+              </Pressable>
             </View>
           )}
         />
       )}
 
-      <Button title="Manage photo access" onPress={openPicker} />
-      {message && <Text>{message}</Text>}
+      {selected && (
+        <View style={{ gap: 8 }}>
+          <Text style={styles.subText}>Filename: {selected.filename}</Text>
+          <Text style={styles.subText}>
+            Size: {selected.width}×{selected.height}
+          </Text>
+          <Text selectable numberOfLines={3} style={styles.subText}>
+            Preview URI: {selected.uri}
+          </Text>
+          <Text selectable numberOfLines={3} style={styles.subText}>
+            File URI: {selected.localUri ?? "Not downloaded yet"}
+          </Text>
+          <Button title="Use file (upload / share)" onPress={useFile} />
+        </View>
+      )}
     </View>
   );
 };
