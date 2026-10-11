@@ -1,14 +1,15 @@
 import {
   ActivityIndicator,
+  Alert,
   Button,
   FlatList,
   Linking,
-  Pressable,
+  Platform,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import * as MediaLibrary from "expo-media-library";
 import { Image } from "expo-image";
 
@@ -16,55 +17,13 @@ const MediaLibraryScreen = () => {
   const [permission, requestPermission] = MediaLibrary.usePermissions();
   const [assets, setAssets] = useState<MediaLibrary.Asset[]>([]);
   const [loading, setLoading] = useState(false);
-  const [albums, setAlbums] = useState<MediaLibrary.Album[]>([]);
-  const [selectedAlbum, setSelectedAlbum] = useState<MediaLibrary.Album | null>(
-    null,
-  );
-  const [endCursor, setEndCursor] = useState<string | undefined>();
-  const [hasNextPage, setHasNextPage] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (permission?.granted) {
-      loadAlbum();
-      loadAssets(false, selectedAlbum);
+      loadGallery();
     }
-  }, [permission?.granted, selectedAlbum]);
-
-  const loadAssets = useCallback(
-    async (append = false, album: MediaLibrary.Album | null) => {
-      if (!permission?.granted) {
-        const result = await requestPermission();
-        if (!result.granted) return;
-      }
-
-      setLoading(true);
-      try {
-        const page = await MediaLibrary.getAssetsAsync({
-          first: 12,
-          after: append ? endCursor : undefined,
-          album: album ?? undefined,
-          mediaType: [
-            MediaLibrary.MediaType.photo,
-            MediaLibrary.MediaType.video,
-          ],
-          sortBy: [[MediaLibrary.SortBy.creationTime, false]],
-        });
-        setAssets((current) => {
-          const combined = append ? [...current, ...page.assets] : page.assets;
-          return [
-            ...new Map(combined.map((asset) => [asset.id, asset])).values(),
-          ];
-        });
-        setEndCursor(page.endCursor);
-        setHasNextPage(page.hasNextPage);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [endCursor, permission?.granted, requestPermission, selectedAlbum],
-  );
+  }, [permission?.granted]);
 
   if (!permission) {
     return (
@@ -102,79 +61,59 @@ const MediaLibraryScreen = () => {
     );
   }
 
-  const loadAlbum = async () => {
-    const list = await MediaLibrary.getAlbumsAsync({
-      includeSmartAlbums: true,
-    });
-    setAlbums(list);
+  const loadGallery = async () => {
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) return;
+    }
+
+    setLoading(true);
+    try {
+      const page = await MediaLibrary.getAssetsAsync({
+        first: 12,
+        mediaType: MediaLibrary.MediaType.photo,
+        sortBy: [[MediaLibrary.SortBy.creationTime, false]],
+      });
+      setAssets(page.assets);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const selectAlbum = (album: MediaLibrary.Album | null) => {
-    setSelectedAlbum(album);
-    loadAssets(false, album);
+  // Limited access picker only work on (iOS / Android 14+)
+  const openPicker = async () => {
+    try {
+      await MediaLibrary.presentPermissionsPickerAsync();
+      setMessage("User updated selected photos. Reload your gallery grid.");
+    } catch (error) {
+      Alert.alert(
+        "Unavailable",
+        error instanceof Error
+          ? error.message
+          : "Only supported on iOS and Android 14+.",
+      );
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Media Gallery</Text>
-      <Text style={styles.subText}>Albums</Text>
-
-      <FlatList
-        style={styles.albumList}
-        horizontal
-        data={[
-          { id: "recent", title: "Recent" } as MediaLibrary.Album,
-          ...albums,
-        ]}
-        keyExtractor={(item) => item.id}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.albumListContent}
-        renderItem={({ item }) => {
-          const isRecent = item.id === "recent";
-          const selected = isRecent
-            ? selectedAlbum === null
-            : selectedAlbum?.id === item.id;
-
-          return (
-            <Pressable
-              onPress={() => selectAlbum(isRecent ? null : item)}
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 12,
-                backgroundColor: selected ? "#208AEF" : "#eee",
-                alignSelf: "flex-start",
-                maxWidth: 120,
-                overflow: "hidden",
-              }}
-            >
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={{
-                  color: selected ? "#fff" : "#000",
-                  fontSize: 12,
-                  flexShrink: 1,
-                }}
-              >
-                {item.title}
-              </Text>
-            </Pressable>
-          );
-        }}
-      />
+      <Text style={styles.subText}>
+        {assets.length} Photos · Access: {permission.accessPrivileges}
+      </Text>
 
       {loading ? (
         <ActivityIndicator />
       ) : (
         <FlatList
-          style={styles.assetsList}
+          style={styles.flatList}
           data={assets}
           keyExtractor={(item) => item.id}
           numColumns={3}
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <View style={styles.gridItem}>
               <Image
@@ -184,17 +123,11 @@ const MediaLibraryScreen = () => {
               />
             </View>
           )}
-          ListFooterComponent={
-            hasNextPage ? (
-              <Button
-                title={loading ? "Loading…" : "Load more"}
-                onPress={() => loadAssets(true, selectedAlbum)}
-                disabled={loading}
-              />
-            ) : null
-          }
         />
       )}
+
+      <Button title="Manage photo access" onPress={openPicker} />
+      {message && <Text>{message}</Text>}
     </View>
   );
 };
@@ -236,18 +169,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  albumList: {
-    width: "100%",
-    flexGrow: 0,
-    marginTop: 12,
-    marginBottom: 12,
-  },
-  assetsList: {
+  flatList: {
     width: "100%",
     flex: 1,
-  },
-  albumListContent: {
-    gap: 8,
+    marginTop: 12,
   },
   listContent: {
     paddingBottom: 16,
