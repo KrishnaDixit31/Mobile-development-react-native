@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import * as MediaLibrary from "expo-media-library";
 import { Image } from "expo-image";
 
@@ -20,13 +20,51 @@ const MediaLibraryScreen = () => {
   const [selectedAlbum, setSelectedAlbum] = useState<MediaLibrary.Album | null>(
     null,
   );
+  const [endCursor, setEndCursor] = useState<string | undefined>();
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   useEffect(() => {
     if (permission?.granted) {
       loadAlbum();
-      loadAssets(null);
+      loadAssets(false, selectedAlbum);
     }
-  }, [permission?.granted]);
+  }, [permission?.granted, selectedAlbum]);
+
+  const loadAssets = useCallback(
+    async (append = false, album: MediaLibrary.Album | null) => {
+      if (!permission?.granted) {
+        const result = await requestPermission();
+        if (!result.granted) return;
+      }
+
+      setLoading(true);
+      try {
+        const page = await MediaLibrary.getAssetsAsync({
+          first: 12,
+          after: append ? endCursor : undefined,
+          album: album ?? undefined,
+          mediaType: [
+            MediaLibrary.MediaType.photo,
+            MediaLibrary.MediaType.video,
+          ],
+          sortBy: [[MediaLibrary.SortBy.creationTime, false]],
+        });
+        setAssets((current) => {
+          const combined = append ? [...current, ...page.assets] : page.assets;
+          return [
+            ...new Map(combined.map((asset) => [asset.id, asset])).values(),
+          ];
+        });
+        setEndCursor(page.endCursor);
+        setHasNextPage(page.hasNextPage);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [endCursor, permission?.granted, requestPermission, selectedAlbum],
+  );
 
   if (!permission) {
     return (
@@ -73,29 +111,7 @@ const MediaLibraryScreen = () => {
 
   const selectAlbum = (album: MediaLibrary.Album | null) => {
     setSelectedAlbum(album);
-    loadAssets(album);
-  };
-
-  const loadAssets = async (album: MediaLibrary.Album | null) => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) return;
-    }
-
-    setLoading(true);
-    try {
-      const page = await MediaLibrary.getAssetsAsync({
-        first: 12,
-        album: album ?? undefined,
-        mediaType: [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video],
-        sortBy: [[MediaLibrary.SortBy.creationTime, false]],
-      });
-      setAssets(page.assets);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
+    loadAssets(false, album);
   };
 
   return (
@@ -168,6 +184,15 @@ const MediaLibraryScreen = () => {
               />
             </View>
           )}
+          ListFooterComponent={
+            hasNextPage ? (
+              <Button
+                title={loading ? "Loading…" : "Load more"}
+                onPress={() => loadAssets(true, selectedAlbum)}
+                disabled={loading}
+              />
+            ) : null
+          }
         />
       )}
     </View>
