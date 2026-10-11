@@ -10,6 +10,7 @@ export default function Index() {
       <View style={styles.content}>
         <Button title="Camera" onPress={() => router.push("/camera")} />
         <Button title="Audio" onPress={() => router.push("/audio")} />
+        <Button title="Gallery" onPress={() => router.push("/mediaLibrary")} />
       </View>
     </View>
   );
