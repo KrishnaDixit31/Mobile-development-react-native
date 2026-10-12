@@ -12,6 +12,7 @@ export default function Index() {
         <Button title="Audio" onPress={() => router.push("/audio")} />
         <Button title="Gallery" onPress={() => router.push("/mediaLibrary")} />
         <Button title="Network" onPress={() => router.push("/network")} />
+        <Button title="Battery" onPress={() => router.push("/batteryStatus")} />
       </View>
     </View>
   );
