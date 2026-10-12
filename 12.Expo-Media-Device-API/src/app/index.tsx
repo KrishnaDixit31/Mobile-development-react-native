@@ -13,6 +13,7 @@ export default function Index() {
         <Button title="Gallery" onPress={() => router.push("/mediaLibrary")} />
         <Button title="Network" onPress={() => router.push("/network")} />
         <Button title="Battery" onPress={() => router.push("/batteryStatus")} />
+        <Button title="Haptics" onPress={() => router.push("/haptics")} />
       </View>
     </View>
   );
