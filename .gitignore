@@ -41,3 +41,6 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Firebase configuration (keep out of GitHub)
+13.Expo-Notifications/google-services.json
