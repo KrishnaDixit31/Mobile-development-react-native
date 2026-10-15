@@ -2,42 +2,27 @@ import { Text, View, StyleSheet, Alert, Button } from "react-native";
 import * as Linking from "expo-linking";
 
 export default function DeepLinkDemo() {
-  // Key point: openURL("https://…") leaves your app and opens the external browser. If you want the page to open inside your app, use expo-web-browser
-  const open = async (url: string) => {
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      Alert.alert("Can't Open this link", url);
-    }
-  };
+  const url = Linking.createURL("details/31", {
+    queryParams: { ref: "Information" },
+  });
+
+  const parsed = Linking.parse(url);
 
   return (
     <View style={styles.container}>
-      <View style={{ padding: 24, gap: 12 }}>
-        {/* Opens the SYSTEM browser (leaves your app) */}
-        <Button title="Open website" onPress={() => open("https://expo.dev")} />
+      <Text style={styles.text}>Deep Link Demo</Text>
+      <View style={{ padding: 18, gap: 12 }}>
+        <Text>Built link:</Text>
+        <Text selectable>{url}</Text>
 
-        {/* Phone dialer */}
+        <Text>Path: {parsed.path}</Text>
+        <Text>ref param: {String(parsed.queryParams?.ref)}</Text>
+
+        {/* Opening your own deep link re-enters the app at that route */}
         <Button
-          title="Call support"
-          onPress={() => open("tel:+919999999999")}
+          title="Open this deep link"
+          onPress={() => Linking.openURL(url)}
         />
-
-        {/* Email app */}
-        <Button
-          title="Email us"
-          onPress={() => open("mailto:hi@example.com?subject=Hello")}
-        />
-
-        {/* Maps */}
-        <Button
-          title="Open in Maps"
-          onPress={() => open("https://maps.google.com/?q=Mumbai")}
-        />
-
-        {/* Your app's own settings page in OS settings */}
-        <Button title="App settings" onPress={() => Linking.openSettings()} />
       </View>
     </View>
   );
@@ -47,6 +32,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    padding: 18,
+  },
+  text: {
+    fontSize: 24,
+    fontWeight: "600",
   },
 });
